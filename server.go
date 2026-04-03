@@ -17,26 +17,61 @@ func mimeType(path string) string {
 	case ".js":
 		return "application/javascript"
 	default:
-		return "text/plain"
+		return ""
 	}
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	path := "." + r.URL.Path
-	if path == "./" {
-		path = "./index.html"
+func securityHeaders(w http.ResponseWriter) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("Content-Security-Policy", "default-src 'self'")
+}
+
+func makeHandler(webRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		securityHeaders(w)
+
+		relPath := strings.TrimPrefix(r.URL.Path, "/")
+		path := filepath.Clean(filepath.Join(webRoot, relPath))
+		if path == webRoot {
+			path = filepath.Join(webRoot, "index.html")
+		}
+
+		if !strings.HasPrefix(path, webRoot+string(filepath.Separator)) {
+			http.NotFound(w, r)
+			return
+		}
+
+		// Block dotfiles and disallow unlisted extensions
+		rel := strings.TrimPrefix(path, webRoot+string(filepath.Separator))
+		for _, segment := range strings.Split(rel, string(filepath.Separator)) {
+			if strings.HasPrefix(segment, ".") {
+				http.NotFound(w, r)
+				return
+			}
+		}
+		if mimeType(path) == "" {
+			http.NotFound(w, r)
+			return
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", mimeType(path))
+		w.Write(data)
 	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-	w.Header().Set("Content-Type", mimeType(path))
-	w.Write(data)
 }
 
 func main() {
-	http.HandleFunc("/", handler)
+	webRoot, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get working directory: %v\n", err)
+		os.Exit(1)
+	}
+	http.HandleFunc("/", makeHandler(webRoot))
 	fmt.Println("Serving at http://localhost:8000")
 	http.ListenAndServe(":8000", nil)
 }

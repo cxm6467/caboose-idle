@@ -88,16 +88,56 @@ function renderSkills() {
       card = document.createElement("div");
       card.className = "skill-card";
       card.id = "skill-" + skill.id;
-      card.innerHTML =
-        "<div class=\"skill-info\">" +
-          "<h3>" + skill.name + "</h3>" +
-          "<p class=\"skill-description\">" + skill.description + "</p>" +
-          "<p>Level: <strong class=\"skill-level\">0</strong></p>" +
-          "<p>Producing: <strong class=\"skill-rate\">0.0</strong> gold/sec</p>" +
-        "</div>" +
-        "<div class=\"skill-actions\">" +
-          "<button class=\"skill-buy-btn\" data-skill=\"" + skill.id + "\">Buy (<span class=\"skill-cost\">" + cost + "</span> gold)</button>" +
-        "</div>";
+
+      // --- skill-info ---
+      var infoDiv = document.createElement("div");
+      infoDiv.className = "skill-info";
+
+      var nameH3 = document.createElement("h3");
+      nameH3.textContent = skill.name;
+
+      var descP = document.createElement("p");
+      descP.className = "skill-description";
+      descP.textContent = skill.description;
+
+      var levelP = document.createElement("p");
+      levelP.appendChild(document.createTextNode("Level: "));
+      var levelStrong = document.createElement("strong");
+      levelStrong.className = "skill-level";
+      levelStrong.textContent = "0";
+      levelP.appendChild(levelStrong);
+
+      var rateP = document.createElement("p");
+      rateP.appendChild(document.createTextNode("Producing: "));
+      var rateStrong = document.createElement("strong");
+      rateStrong.className = "skill-rate";
+      rateStrong.textContent = "0.0";
+      rateP.appendChild(rateStrong);
+      rateP.appendChild(document.createTextNode(" gold/sec"));
+
+      infoDiv.appendChild(nameH3);
+      infoDiv.appendChild(descP);
+      infoDiv.appendChild(levelP);
+      infoDiv.appendChild(rateP);
+
+      // --- skill-actions ---
+      var actionsDiv = document.createElement("div");
+      actionsDiv.className = "skill-actions";
+
+      var buyBtn = document.createElement("button");
+      buyBtn.className = "skill-buy-btn";
+      buyBtn.dataset.skill = skill.id;
+      buyBtn.appendChild(document.createTextNode("Buy ("));
+      var costSpan = document.createElement("span");
+      costSpan.className = "skill-cost";
+      costSpan.textContent = cost;
+      buyBtn.appendChild(costSpan);
+      buyBtn.appendChild(document.createTextNode(" gold)"));
+
+      actionsDiv.appendChild(buyBtn);
+
+      card.appendChild(infoDiv);
+      card.appendChild(actionsDiv);
       list.appendChild(card);
     }
 
@@ -143,11 +183,40 @@ function save() {
   }));
 }
 
+function sanitizeSave(data) {
+  var gold = Number(data.gold);
+  if (!isFinite(gold) || gold < 0) gold = 0;
+  if (gold > 1e15) gold = 1e15;
+  data.gold = gold;
+
+  if (data.skills && typeof data.skills === "object") {
+    Object.keys(data.skills).forEach(function(id) {
+      var skill = data.skills[id];
+      if (!skill || typeof skill !== "object") {
+        data.skills[id] = { level: 0 };
+        return;
+      }
+      var level = Math.floor(Number(skill.level));
+      if (!isFinite(level) || level < 0) level = 0;
+      if (level > 1000) level = 1000;
+      data.skills[id].level = level;
+    });
+  }
+
+  return data;
+}
+
 function load() {
   var raw = localStorage.getItem("caboose-idle-save");
   if (!raw) return;
-  var data = JSON.parse(raw);
-  if (data.gold) state.resources.gold.value = data.gold;
+  var data;
+  try {
+    data = sanitizeSave(JSON.parse(raw));
+  } catch (e) {
+    localStorage.removeItem("caboose-idle-save");
+    return;
+  }
+  if ("gold" in data) state.resources.gold.value = data.gold;
   if (data.skills) {
     Object.entries(data.skills).forEach(function(entry) {
       var id = entry[0];
