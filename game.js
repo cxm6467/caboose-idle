@@ -192,6 +192,10 @@ function sanitizeSave(data) {
   if (data.skills && typeof data.skills === "object") {
     Object.keys(data.skills).forEach(function(id) {
       var skill = data.skills[id];
+      if (!skill || typeof skill !== "object") {
+        data.skills[id] = { level: 0 };
+        return;
+      }
       var level = Math.floor(Number(skill.level));
       if (!isFinite(level) || level < 0) level = 0;
       if (level > 1000) level = 1000;
@@ -205,8 +209,14 @@ function sanitizeSave(data) {
 function load() {
   var raw = localStorage.getItem("caboose-idle-save");
   if (!raw) return;
-  var data = sanitizeSave(JSON.parse(raw));
-  if (data.gold) state.resources.gold.value = data.gold;
+  var data;
+  try {
+    data = sanitizeSave(JSON.parse(raw));
+  } catch (e) {
+    localStorage.removeItem("caboose-idle-save");
+    return;
+  }
+  if ("gold" in data) state.resources.gold.value = data.gold;
   if (data.skills) {
     Object.entries(data.skills).forEach(function(entry) {
       var id = entry[0];
