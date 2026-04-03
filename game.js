@@ -133,7 +133,7 @@ document.getElementById("skills-list").addEventListener("click", function(e) {
 // =============================================================================
 
 function save() {
-  localStorage.setItem("idle-game-save", JSON.stringify({
+  localStorage.setItem("caboose-idle-save", JSON.stringify({
     gold: state.resources.gold.value,
     skills: Object.fromEntries(
       Object.entries(state.skills).map(function(entry) {
@@ -144,7 +144,7 @@ function save() {
 }
 
 function load() {
-  var raw = localStorage.getItem("idle-game-save");
+  var raw = localStorage.getItem("caboose-idle-save");
   if (!raw) return;
   var data = JSON.parse(raw);
   if (data.gold) state.resources.gold.value = data.gold;
