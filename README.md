@@ -4,7 +4,7 @@ A medieval idle game built with vanilla HTML, CSS, and JavaScript.
 
 ## Play
 
-Play it live at: [caboose.github.io/caboose-idle](https://caboose.github.io/caboose-idle) *(coming soon)*
+Play it live at: [cxm6467.github.io/caboose-idle](https://cxm6467.github.io/caboose-idle)
 
 ## How to Play
 
