@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Idle Game</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Idle Game</h1>
+      </header>
+      <main>
+        <section id="resources-panel">
+          <h2>Resources</h2>
+          <div id="resources-list">
+            <div class="resource" id="resource-gold">
+              <span class="resource-name">Gold</span>
+              <span class="resource-value" id="gold-value">0</span>
+              <span class="resource-rate" id="gold-rate">(+0/sec)</span>
+            </div>
+          </div>
+          <button id="click-btn">Find Gold</button>
+        </section>
+        <section id="skills-panel">
+          <h2>Skills</h2>
+          <div id="skills-list"></div>
+        </section>
+      </main>
+    </div>
+    <script src="game.js"></script>
+  </body>
+</html>
